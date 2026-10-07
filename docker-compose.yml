@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    container_name: hosteldesk-backend
+    restart: unless-stopped
+    env_file:
+      - backend/.env
+    environment:
+      FRONTEND_ORIGIN: "http://localhost:8080"
+      DATABASE_URL: "sqlite:///./data/hosteldesk.db"
+      UPLOAD_DIR: "/app/uploads"
+    volumes:
+      - hosteldesk-data:/app/data
+      - hosteldesk-uploads:/app/uploads
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build: ./frontend
+    container_name: hosteldesk-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      BACKEND_HOST: "backend:8000"
+    ports:
+      - "8080:80"
+
+volumes:
+  hosteldesk-data:
+  hosteldesk-uploads:
